@@ -13,3 +13,5 @@ dist
 
 # Windows
 Thumbs.db
+/.pydevproject
+*.project

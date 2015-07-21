@@ -29,6 +29,8 @@ class Crawler(object):
 
         self.spidercls = spidercls
         self.settings = settings.copy()
+        
+        # 加载spider 自定义的设置     -- comment by jigc 2015-7-21
         self.spidercls.update_settings(self.settings)
 
         self.signals = SignalManager(self)
@@ -40,7 +42,9 @@ class Crawler(object):
         # garbage collected after leaving __init__ scope
         self.__remove_handler = lambda: logging.root.removeHandler(handler)
         self.signals.connect(self.__remove_handler, signals.engine_stopped)
-
+        
+        
+        # 实例化日志格式对象     -- comment by jigc 2015-7-21
         lf_cls = load_object(self.settings['LOG_FORMATTER'])
         self.logformatter = lf_cls.from_crawler(self)
         self.extensions = ExtensionManager.from_crawler(self)
@@ -164,6 +168,8 @@ class CrawlerRunner(object):
 
     def _create_crawler(self, spidercls):
         if isinstance(spidercls, six.string_types):
+            
+            # 加载spider类    -- comment by jigc 2015-7-21
             spidercls = self.spider_loader.load(spidercls)
         return Crawler(spidercls, self.settings)
 
