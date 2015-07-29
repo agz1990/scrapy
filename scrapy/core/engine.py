@@ -102,6 +102,8 @@ class ExecutionEngine(object):
             return
 
         while not self._needs_backout(spider):
+            
+            # 重要代码标记 *   -- comment by jigc 2015-7-29
             if not self._next_request_from_scheduler(spider):
                 break
 
@@ -129,9 +131,13 @@ class ExecutionEngine(object):
 
     def _next_request_from_scheduler(self, spider):
         slot = self.slot
+        
+        # 向调度器请求下一个爬去请求的内容    -- comment by jigc 2015-7-29
         request = slot.scheduler.next_request()
         if not request:
             return
+        
+        # 配置下载请求处理回调链    -- comment by jigc 2015-7-29
         d = self._download(request, spider)
         d.addBoth(self._handle_downloader_output, request, spider)
         d.addErrback(lambda f: logger.info('Error while handling downloader output',
@@ -153,6 +159,8 @@ class ExecutionEngine(object):
         if isinstance(response, Request):
             self.crawl(response, spider)
             return
+        
+        # 处理下载的数据   -- comment by jigc 2015-7-29
         # response is a Response or Failure
         d = self.scraper.enqueue_scrape(response, request, spider)
         d.addErrback(lambda f: logger.error('Error while enqueuing downloader output',
@@ -180,6 +188,8 @@ class ExecutionEngine(object):
         assert spider in self.open_spiders, \
             "Spider %r not opened when crawling: %s" % (spider.name, request)
         self.schedule(request, spider)
+        
+        # 将下一个爬去任务注册到reactor  -- comment by jigc 2015-7-29
         self.slot.nextcall.schedule()
 
     def schedule(self, request, spider):
@@ -217,7 +227,8 @@ class ExecutionEngine(object):
         def _on_complete(_):
             slot.nextcall.schedule()
             return _
-
+        
+        # 开始下载任务    -- comment by jigc 2015-7-29
         dwld = self.downloader.fetch(request, spider)
         dwld.addCallbacks(_on_success)
         dwld.addBoth(_on_complete)
@@ -238,6 +249,8 @@ class ExecutionEngine(object):
         yield self.scraper.open_spider(spider)
         self.crawler.stats.open_spider(spider)
         yield self.signals.send_catch_log_deferred(signals.spider_opened, spider=spider)
+        
+        # 开始爬取网页数据     -- comment by jigc 2015-7-29
         slot.nextcall.schedule()
 
     def _spider_idle(self, spider):
